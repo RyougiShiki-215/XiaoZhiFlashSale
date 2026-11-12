@@ -6,7 +6,7 @@
   agent 每轮图结束后调用 clear_thread 删除该线程，实现"每轮结束自动清工作记忆"。
 
 降级策略：
-  - settings.state_store == "memory"（默认）→ 不挂 checkpointer，行为与重构前一致。
+  - settings.state_store == "memory"（默认）→ 不挂 checkpointer，仅使用单次调用的内存态。
   - state_store == "redis" 但 Redis 不可达 → 尝试后回退内存并告警，不影响启动与运行。
   - 结果全局缓存，避免每次调用都重连探测。
 """
