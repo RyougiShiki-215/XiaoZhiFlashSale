@@ -1,0 +1,38 @@
+# LangGraph 核心
+langgraph>=0.2.60
+langchain-core>=0.3.20
+langchain-openai>=0.3.0
+
+# 工作记忆 Redis checkpoint（用 0.2.x 而非 0.3+：langgraph 1.x 要求 langgraph-checkpoint<4，
+# 而 langgraph-checkpoint-redis>=0.3 强制 >=4 会与 langgraph 冲突；0.2.1 兼容）
+langgraph-checkpoint-redis>=0.2,<0.3
+
+# Web 框架（Web 服务）
+fastapi>=0.115.0
+uvicorn>=0.32.0
+
+# 配置与数据模型
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
+python-dotenv>=1.0.1
+
+# 向量计算（内存向量库兜底方案）
+numpy>=1.26.0
+
+# Milvus 向量数据库（3.x 客户端）
+pymilvus>=2.4.0
+# Milvus Lite 嵌入式后端（本机免 Docker 运行，配合 pymilvus 使用）
+milvus-lite>=3.2.0
+
+# 关键词检索（混合检索的 BM25 分支，配合 Elasticsearch 使用；<9 因 9.x 客户端与 8.x 服务端不兼容）
+elasticsearch>=8.11,<9
+
+# 商家 PDF 解析（文字/表格/图片同时提取）
+pymupdf>=1.24.0
+
+# 重排（CrossEncoder 精排，配合 RAG_RERANK_ENABLED 使用）
+sentence-transformers>=3.0.0
+#torch  # 建议按 pytorch 官方 CPU 源安装：pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# 联网搜索（Tavily，可选）
+tavily-python>=0.5.0

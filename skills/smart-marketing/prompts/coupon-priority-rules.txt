@@ -1,0 +1,78 @@
+# 场景B prompts/：选券优先级特殊规则（可热更新，不用改 skill.md 正文）
+
+> **使用说明**：
+> - 此文件由 Skill 第四步「选券 + 发放」阶段在默认策略执行**之前**先读取。
+> - 如果匹配到任何一条规则，则**覆盖 skill.md 正文里的默认选券策略**。
+> - 如果没有匹配项，则回退到默认策略（历史客单价×1.2 → 优惠金额最大）。
+> - 运营可随时修改此文件后调用 SkillRegistry 动态重扫即可生效，无需改代码和重启。
+
+---
+
+## 🏷️ 规则格式说明（按顺序匹配，命中即停）
+```
+IF  <触发条件>
+THEN <选券覆盖动作>
+DESC <规则描述，用于发放时的 reason 字段>
+```
+
+---
+
+## 🎊 规则一：法定节假日 / 大促日强制高优惠
+```
+IF  today_is_in("法定节假日", "618", "双11", "双12", "年货节", "38女王节", "517吃货节")
+THEN from(候选优惠券列表).where(stock >= 30).sort_by(discount DESC).limit(1)
+DESC "正值{节日名}大促，系统优先为您发放力度最大的优惠券"
+```
+
+---
+
+## 🌙 规则二：深夜时段（21:00-05:00）优先夜宵优惠券
+```
+IF  current_hour_between(21, 5)
+THEN from(候选优惠券列表).where(name_contains("夜宵", "24小时", "深夜")).if_empty(default_strategy)
+DESC "深夜时段为您匹配夜宵商家专属优惠券"
+```
+
+---
+
+## 🌞 规则三：工作日午餐时段（11:30-12:30）优先低门槛券（拉下单率）
+```
+IF  weekday_and_hour(Mon-Fri, 11:30-12:30)
+THEN from(候选优惠券列表).where(threshold <= 20).sort_by(discount DESC).limit(1).if_empty(default_strategy)
+DESC "工作日午餐时段为您挑选门槛最低的优惠券，轻松就能用"
+```
+
+---
+
+## 🎂 规则四：用户生日当天（来自画像 or 用户说）送无门槛券
+```
+IF  user_profile_tag_contains("今天生日", "生日当天") OR user_message_contains("生日", "过生日")
+THEN from(候选优惠券列表).where(couponType = "无门槛券").sort_by(discount DESC).limit(1)
+     .if_empty(from(候选).where(threshold <= 0))
+DESC "生日快乐🎂！为您送上专属无门槛生日福利券"
+```
+
+---
+
+## 👑 规则五：高价值用户（近30天消费≥300元）发高额度券
+```
+IF  user_tag_is("高价值用户") OR recent_30d_amount >= 300
+THEN from(候选优惠券列表).where(discount >= 10).sort_by(discount DESC).limit(1).if_empty(default_strategy)
+DESC "感谢您一直以来的支持，VIP用户专享大额优惠券已发放"
+```
+
+---
+
+## 🆕 规则六：新用户（历史订单数≤3单）强制发新人券
+```
+IF  history_order_count <= 3
+THEN from(候选优惠券列表).where(name_contains("新人", "首单")).limit(1).if_empty(default_strategy)
+DESC "新用户专属福利，首单立减优惠券已为您备好"
+```
+
+---
+
+## ❗️ 默认兜底（无任何规则命中时使用）
+```
+DEFAULT default_strategy  # 即 skill.md 正文中的：门槛≤客单价×1.2 → 优惠金额最大
+```
